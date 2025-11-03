@@ -1,0 +1,70 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Configuração CORS global
+          globalcors:
+            cors-configurations:
+              "[/**]":
+                allowedOrigins: "*"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - PATCH
+                  - OPTIONS
+                allowedHeaders: "*"
+
+          # Service Discovery
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+# Configuração JWT (deve ser a mesma do serviço de autenticação)
+jwt:
+  secret: "${JWT_SECRET-:minhaChaveSecretaSuperSecreta}"
+  expiration: 86400000 # 24 horas em milissegundos
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.escola.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator para monitoramento
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+microservices:
+  auth-service:
+    url: "${AUTH_SERVICE_HOST:-http://localhost:8081}"
+  teacher-service:
+    url: "${TEACHER_SERVICE_HOST:-http://localhost:8082}"
+  student-service:
+    url: "${STUDENT_SERVICE_HOST:-http://localhost:8083}"
