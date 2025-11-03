@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 80
 
 spring:
   application:
@@ -33,8 +33,8 @@ spring:
 
 # Configuração JWT (deve ser a mesma do serviço de autenticação)
 jwt:
-  secret: "${JWT_SECRET-:minhaChaveSecretaSuperSecreta}"
-  expiration: 86400000 # 24 horas em milissegundos
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
 
 # Logging
 logging:
@@ -63,8 +63,6 @@ management:
 
 microservices:
   auth-service:
-    url: "${AUTH_SERVICE_HOST:-http://localhost:8081}"
-  teacher-service:
-    url: "${TEACHER_SERVICE_HOST:-http://localhost:8082}"
+    url: ${AUTH_SERVER_HOST:http://localhost:8081}
   student-service:
-    url: "${STUDENT_SERVICE_HOST:-http://localhost:8083}"
+    url: ${STUDENT_SERVER_HOST:http://localhost:8082}

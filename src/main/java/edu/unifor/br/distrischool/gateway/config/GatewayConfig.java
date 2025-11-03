@@ -8,20 +8,15 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 @Slf4j
 @Configuration
-@Profile("no-discovery")
 public class GatewayConfig {
     @Autowired
     private AuthenticationFilter authenticationFilter;
 
     @Value("${microservices.auth-service.url}")
     private String authServiceUrl;
-
-    @Value("${microservices.teacher-service.url}")
-    private String teacherServiceUrl;
 
     @Value("${microservices.student-service.url}")
     private String studentServiceUrl;
@@ -30,21 +25,17 @@ public class GatewayConfig {
     public RouteLocator customRouteLocatorWithoutDiscovery(RouteLocatorBuilder builder) {
 
         return builder.routes()
-                .route("auth-service", r -> r
-                        .path("/api/auth/**")
+                .route("auth-service-me", r -> r
+                        .path("/api/auth/me")
                         .filters(f -> f
                                 .stripPrefix(1)
                                 .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
                         )
                         .uri(authServiceUrl))
-
-                .route("teacher-service", r -> r
-                        .path("/api/teachers/**")
-                        .filters(f -> f
-                                .stripPrefix(1)
-                                .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
-                        )
-                        .uri(teacherServiceUrl))
+                .route("auth-service-public", r -> r
+                        .path("/api/auth/**")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri(authServiceUrl))
 
                 .route("student-service", r -> r
                         .path("/api/students/**")

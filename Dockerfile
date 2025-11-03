@@ -21,7 +21,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 COPY --from=build /app/target/*.jar /app/app.jar
 
 # Expose app port (matches server.port)
-EXPOSE 8080 
+EXPOSE 80 
 
 USER spring
 
