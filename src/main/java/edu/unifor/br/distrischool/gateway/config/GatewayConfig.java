@@ -8,10 +8,14 @@ import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+
+import java.util.Set;
 
 @Slf4j
 @Configuration
 public class GatewayConfig {
+
     @Autowired
     private AuthenticationFilter authenticationFilter;
 
@@ -23,18 +27,30 @@ public class GatewayConfig {
 
     @Bean
     public RouteLocator customRouteLocatorWithoutDiscovery(RouteLocatorBuilder builder) {
-
         return builder.routes()
                 .route("auth-service-me", r -> r
                         .path("/api/auth/me")
                         .filters(f -> f
                                 .stripPrefix(1)
                                 .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
+                                .circuitBreaker(config -> config
+                                        .setName("authService")
+                                        .setFallbackUri("forward:/fallback/auth")
+                                        .setStatusCodes(Set.of("500", "502", "503", "504"))
+                                )
                         )
                         .uri(authServiceUrl))
+
                 .route("auth-service-public", r -> r
                         .path("/api/auth/**")
-                        .filters(f -> f.stripPrefix(1))
+                        .filters(f -> f
+                                .stripPrefix(1)
+                                .circuitBreaker(config -> config
+                                        .setName("authService")
+                                        .setFallbackUri("forward:/fallback/auth")
+                                        .setStatusCodes(Set.of("500", "502", "503", "504"))
+                                )
+                        )
                         .uri(authServiceUrl))
 
                 .route("student-service", r -> r
@@ -42,6 +58,11 @@ public class GatewayConfig {
                         .filters(f -> f
                                 .stripPrefix(1)
                                 .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
+                                .circuitBreaker(config -> config
+                                        .setName("studentService")
+                                        .setFallbackUri("forward:/fallback/students")
+                                        .setStatusCodes(Set.of("500", "502", "503", "504"))
+                                )
                         )
                         .uri(studentServiceUrl))
 

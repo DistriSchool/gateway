@@ -9,7 +9,6 @@ spring:
     gateway:
       server:
         webflux:
-          # Configuração CORS global
           globalcors:
             cors-configurations:
               "[/**]":
@@ -31,7 +30,42 @@ spring:
           default-filters:
             - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
-# Configuração JWT (deve ser a mesma do serviço de autenticação)
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+    instances:
+      authService:
+        baseConfig: default
+        waitDurationInOpenState: 15s
+        failureRateThreshold: 60
+      studentService:
+        baseConfig: default
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 10s
+    instances:
+      authService:
+        timeoutDuration: 15s
+      studentService:
+        timeoutDuration: 15s
+
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}
@@ -43,19 +77,22 @@ logging:
     com.escola.gateway: DEBUG
     org.springframework.cloud.gateway: DEBUG
     reactor.netty: INFO
+    io.github.resilience4j: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
-# Actuator para monitoramento
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents
   endpoint:
     health:
       show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
   prometheus:
     metrics:
       export:
