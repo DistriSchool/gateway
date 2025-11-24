@@ -25,6 +25,9 @@ public class GatewayConfig {
     @Value("${microservices.student-service.url}")
     private String studentServiceUrl;
 
+    @Value("${microservices.teacher-service.url}")
+    private String teacherServiceUrl;
+
     @Bean
     public RouteLocator customRouteLocatorWithoutDiscovery(RouteLocatorBuilder builder) {
         return builder.routes()
@@ -65,6 +68,14 @@ public class GatewayConfig {
                                 )
                         )
                         .uri(studentServiceUrl))
+
+                .route("teacher-service", r -> r
+                        .path("/api/teachers/**")
+                        .filters(f -> f
+                                .stripPrefix(1)
+                                .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
+                        )
+                        .uri(teacherServiceUrl))
 
                 .build();
     }

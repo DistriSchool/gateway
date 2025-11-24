@@ -103,3 +103,5 @@ microservices:
     url: ${AUTH_SERVER_HOST:http://localhost:8081}
   student-service:
     url: ${STUDENT_SERVER_HOST:http://localhost:8082}
+  teacher-service:
+    url: ${TEACHER_SERVER_HOST:http://localhost:8083}
