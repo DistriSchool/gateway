@@ -86,17 +86,17 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
-  prometheus:
-    metrics:
-      export:
+
+micrometer:
+  metrics:
+    export:
+      prometheus:
         enabled: true
+        step: 15s
 
 microservices:
   auth-service:

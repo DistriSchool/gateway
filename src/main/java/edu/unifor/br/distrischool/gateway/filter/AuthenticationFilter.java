@@ -31,35 +31,30 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
-            // Lista de endpoints públicos que não precisam de autenticação
             if (isPublicEndpoint(request.getURI().getPath())) {
                 return chain.filter(exchange);
             }
 
-            // Verifica se o header Authorization existe
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                return onError(exchange, "Token de autorização ausente", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Token de autorização ausente");
             }
 
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return onError(exchange, "Token inválido", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Token inválido");
             }
 
             String token = authHeader.substring(7);
 
             try {
-                // Valida o token
                 if (!jwtService.validateToken(token)) {
-                    return onError(exchange, "Token expirado ou inválido", HttpStatus.UNAUTHORIZED);
+                    return onError(exchange, "Token expirado ou inválido");
                 }
 
-                // Extrai informações do token e adiciona aos headers
                 String username = jwtService.extractUsername(token);
                 List<String> roles = jwtService.extractRoles(token);
 
-                // Adiciona informações do usuário aos headers da requisição
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-User-Id", username)
                         .header("X-User-Roles", String.join(",", roles))
@@ -71,29 +66,26 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
             } catch (Exception e) {
                 log.error("Erro na validação do token: {}", e.getMessage());
-                return onError(exchange, "Falha na autenticação", HttpStatus.UNAUTHORIZED);
+                return onError(exchange, "Falha na autenticação");
             }
         };
     }
 
     private boolean isPublicEndpoint(String path) {
-        // Endpoints públicos que não precisam de autenticação
         return path.contains("/auth/login") ||
-                path.contains("/auth/register") ||
                 path.contains("/actuator") ||
                 path.contains("/swagger") ||
                 path.contains("/api-docs");
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, String message, HttpStatus httpStatus) {
+    private Mono<Void> onError(ServerWebExchange exchange, String message) {
         ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(httpStatus);
+        response.setStatusCode(HttpStatus.UNAUTHORIZED);
         log.error("Erro de autenticação: {}", message);
         return response.setComplete();
     }
 
     public static class Config {
-        // Configurações personalizadas do filtro podem ser adicionadas aqui
     }
 }
 
