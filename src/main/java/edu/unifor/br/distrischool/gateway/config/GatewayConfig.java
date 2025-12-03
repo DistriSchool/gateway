@@ -33,6 +33,12 @@ public class GatewayConfig {
     @Value("${microservices.teacher-service.url}")
     private String teacherServiceUrl;
 
+    @Value("${microservices.classroom-service.url}")
+    private String classroomServiceUrl;
+
+    @Value("${microservices.course-service.url}")
+    private String courseServiceUrl;
+
     @Bean
     public RouteLocator customRouteLocatorWithoutDiscovery(RouteLocatorBuilder builder) {
         return builder.routes()
@@ -44,9 +50,7 @@ public class GatewayConfig {
                                 .circuitBreaker(config -> config
                                         .setName("authService")
                                         .setFallbackUri("forward:/fallback/auth")
-                                        .setStatusCodes(Set.of("500", "502", "503", "504"))
-                                )
-                        )
+                                        .setStatusCodes(Set.of("500", "502", "503", "504"))))
                         .uri(authServiceUrl))
 
                 .route("auth-service-public", r -> r
@@ -56,9 +60,7 @@ public class GatewayConfig {
                                 .circuitBreaker(config -> config
                                         .setName("authService")
                                         .setFallbackUri("forward:/fallback/auth")
-                                        .setStatusCodes(Set.of("500", "502", "503", "504"))
-                                )
-                        )
+                                        .setStatusCodes(Set.of("500", "502", "503", "504"))))
                         .uri(authServiceUrl))
 
                 .route("student-service", r -> r
@@ -70,9 +72,7 @@ public class GatewayConfig {
                                 .circuitBreaker(config -> config
                                         .setName("studentService")
                                         .setFallbackUri("forward:/fallback/students")
-                                        .setStatusCodes(Set.of("500", "502", "503", "504"))
-                                )
-                        )
+                                        .setStatusCodes(Set.of("500", "502", "503", "504"))))
                         .uri(studentServiceUrl))
 
                 .route("teacher-service", r -> r
@@ -80,10 +80,32 @@ public class GatewayConfig {
                         .filters(f -> f
                                 .stripPrefix(1)
                                 .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
-                                .filter(authorizationFilter.apply(new AuthorizationFilter.Config(List.of("ADMIN"))))
-                        )
+                                .filter(authorizationFilter.apply(new AuthorizationFilter.Config(List.of("ADMIN")))))
                         .uri(teacherServiceUrl))
 
+                .route("classroom-service", r -> r
+                        .path("/api/classrooms/**")
+                        .filters(f -> f
+                                .stripPrefix(1)
+                                .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
+                                .filter(authorizationFilter.apply(new AuthorizationFilter.Config(List.of("ADMIN")))))
+                        .uri(classroomServiceUrl))
+
+                .route("discipline-service", r -> r
+                        .path("/api/disciplines/**")
+                        .filters(f -> f
+                                .stripPrefix(1)
+                                .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
+                                .filter(authorizationFilter.apply(new AuthorizationFilter.Config(List.of("ADMIN")))))
+                        .uri(classroomServiceUrl))
+
+                .route("course-service", r -> r
+                        .path("/api/courses/**")
+                        .filters(f -> f
+                                .stripPrefix(1)
+                                .filter(authenticationFilter.apply(new AuthenticationFilter.Config()))
+                                .filter(authorizationFilter.apply(new AuthorizationFilter.Config(List.of("ADMIN")))))
+                        .uri(courseServiceUrl))
                 .build();
     }
 }
